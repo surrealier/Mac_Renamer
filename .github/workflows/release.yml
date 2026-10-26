@@ -1,12 +1,16 @@
 name: Release
 
+# Two ways to cut a release:
+#   • push a tag:        git tag v1.2.0 && git push origin v1.2.0
+#   • or run it by hand: Actions › Release › Run workflow › tag "v1.2.0"
+#     (builds the selected branch and creates the tag + release from that commit)
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to (re)build, e.g. v1.0.0"
+        description: "Version tag to publish, e.g. v1.2.0"
         required: true
 
 permissions:
@@ -17,18 +21,25 @@ jobs:
     runs-on: macos-15
     timeout-minutes: 30
     env:
-      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      TAG: ${{ inputs.tag || github.ref_name }}
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Check the tag
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || { echo "Tag must look like v1.2.3, got '$TAG'"; exit 1; }
 
       - name: Test
         run: swift test
 
       - name: Build Mac_Renamer.app
         run: VERSION="${TAG#v}" ./scripts/build_app.sh
+
+      - name: GUI self-test
+        timeout-minutes: 3
+        run: dist/Mac_Renamer.app/Contents/MacOS/Mac_Renamer --selftest
 
       - name: Publish the GitHub release
         env:
@@ -40,5 +51,7 @@ jobs:
             gh release upload "$TAG" $FILES --clobber
             gh release edit "$TAG" --notes-file dist/notes.md
           else
-            gh release create "$TAG" $FILES --title "Mac_Renamer $TAG" --notes-file dist/notes.md --latest
+            # Creates the tag at the commit that was just tested and built, if it doesn't exist yet.
+            gh release create "$TAG" $FILES --target "$GITHUB_SHA" \
+              --title "Mac_Renamer $TAG" --notes-file dist/notes.md --latest
           fi

@@ -157,8 +157,9 @@ open dist/Mac_Renamer.app
 With full Xcode the binary is universal (Apple Silicon + Intel); with only the Command Line
 Tools (`xcode-select --install`) it's built for your Mac's architecture.
 
-Releases are built by GitHub Actions: pushing a `v*` tag runs the tests, builds the universal
-app and attaches `Mac_Renamer.zip` to the release.
+Releases are built by GitHub Actions: pushing a `v*` tag (or running **Actions › Release › Run
+workflow** with a tag name) runs the tests and the GUI self-test, builds the universal app and
+attaches `Mac_Renamer.zip` to the release.
 
 </details>
 
