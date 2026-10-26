@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Toolchain
+        run: |
+          sw_vers
+          xcodebuild -version
+          swift --version
+
+      - name: Test (RenamerCore)
+        run: swift test
+
+      - name: Build Mac_Renamer.app (universal, ad-hoc signed)
+        run: ./scripts/build_app.sh
+
+      - name: Inspect the bundle
+        run: |
+          APP=dist/Mac_Renamer.app
+          "$APP/Contents/MacOS/Mac_Renamer" --version
+          archs="$(lipo -archs "$APP/Contents/MacOS/Mac_Renamer")"; echo "archs: $archs"
+          [[ "$archs" == *arm64* && "$archs" == *x86_64* ]]
+          plutil -extract NSServices.0.NSMessage raw "$APP/Contents/Info.plist" | grep -qx renameFiles
+          plutil -extract LSUIElement raw "$APP/Contents/Info.plist" | grep -qx true
+          codesign -dv "$APP" 2>&1 | grep -E "Identifier|Signature"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mac_Renamer
+          path: |
+            dist/Mac_Renamer.zip
+            dist/Mac_Renamer.zip.sha256
+
+  core-on-linux:
+    # The rename engine is plain Foundation, so its tests also run on Linux.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container: swift:6.1
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test

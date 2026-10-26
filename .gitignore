@@ -1,0 +1,17 @@
+# SwiftPM / Xcode
+.build/
+.swiftpm/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+
+# Packaged output
+dist/
+*.zip
+docs/frames/
+
+# Temp files Mac_Renamer may leave if a batch is interrupted
+~macrenamer-*.tmp
+
+# macOS cruft
+.DS_Store

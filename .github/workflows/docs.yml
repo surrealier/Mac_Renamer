@@ -1,0 +1,56 @@
+name: Screenshots
+
+# Renders the real dialog off-screen and refreshes docs/dialog.png + docs/demo.gif,
+# so the README always shows the current UI.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Sources/MacRenamerApp/**"
+      - "scripts/make_gif.py"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build -c release --product MacRenamerApp
+
+      - name: Render the dialog
+        timeout-minutes: 5
+        run: |
+          BIN="$(swift build -c release --product MacRenamerApp --show-bin-path)/MacRenamerApp"
+          "$BIN" --snapshot docs
+          ls -la docs docs/frames | head -20
+
+      - name: Assemble demo.gif
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet pillow
+          .venv/bin/python scripts/make_gif.py docs/frames docs/demo.gif
+          rm -rf docs/frames
+
+      - name: Commit if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/dialog.png docs/demo.gif
+          if git diff --cached --quiet; then
+            echo "Screenshots unchanged."
+          else
+            git commit -m "docs: refresh screenshots [skip ci]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
