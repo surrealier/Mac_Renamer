@@ -17,6 +17,8 @@ case "--snapshot":
     exit(Snapshot.run(outputDirectory: arguments.dropFirst().first ?? "."))
 case "--uninstall":
     exit(Uninstall.run())
+case "--selftest":
+    exit(SelfTest.run())
 default:
     break // anything else (e.g. -psn_… from older launchers) is ignored
 }

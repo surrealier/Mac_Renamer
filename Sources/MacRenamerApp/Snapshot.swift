@@ -86,8 +86,13 @@ enum Snapshot {
         hosting.sizingOptions = [.minSize]
         window.contentView = hosting
         window.setContentSize(NSSize(width: 680, height: 600))
+        // Draw it as the active window (colored traffic lights, blue default button), the way
+        // it looks after pressing ⌥F2.
+        NSApp.finishLaunching()
+        activateApp()
+        window.makeKeyAndOrderFront(nil)
         window.orderFrontRegardless()
-        window.makeKey()
+        settle()
         return window
     }
 

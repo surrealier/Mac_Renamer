@@ -187,8 +187,13 @@ NFD/NFC matching, packages, the on-disk rename engine, collisions (on disk, insi
 appearing after the preview), case-only renames, chains and swaps, partial-failure isolation and
 undo. They run on macOS and Linux in CI.
 
+`Mac_Renamer --selftest` is a GUI integration test: it opens the real rename window on temporary
+files, fills in prefix / remove / wildcard / counter, presses **Rename**, checks the result on disk
+(including a `.rtfd` package) and undoes it. CI runs it on every push, plus a launch smoke test.
+
 ```bash
 swift test
+swift build && "$(swift build --show-bin-path)/MacRenamerApp" --selftest
 ```
 
 </details>

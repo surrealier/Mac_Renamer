@@ -256,7 +256,7 @@ final class RenameWindowController: NSWindowController, NSWindowDelegate {
         window?.makeKeyAndOrderFront(nil)
     }
 
-    private func apply() {
+    func apply() {
         guard model.canApply else { return }
         // Re-plan at the moment of Apply so anything that changed on disk since the last
         // keystroke is taken into account.
